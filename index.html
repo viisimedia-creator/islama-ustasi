@@ -7,8 +7,8 @@
 <meta name="description" content="Adapazarı çarşısında ıslama tezgâhı sende! Ekmeği kıvamında ıslat, adisyona göre tabağı kur, müşteriyi bekletme. Ücretsiz oyna.">
 <meta name="theme-color" content="#891720">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="ikonlar/ikon-192.png">
-<link rel="apple-touch-icon" href="ikonlar/apple-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="ikon-192.png">
+<link rel="apple-touch-icon" href="apple-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Islama Ustası">
@@ -25,6 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap">
+<script defer src="https://cloud.umami.is/script.js" data-website-id="a0e56b71-6af0-4b2b-bdf1-d67ad1f5711f" data-domains="viisimedia-creator.github.io"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%;margin:0}
@@ -376,6 +377,7 @@ button:focus-visible{outline:3px solid var(--kirmizi);outline-offset:2px}
 <script>
 (() => {
 'use strict';
+const olc = (ad, veri) => { try { if (window.umami) umami.track(ad, veri); } catch (e) {} };
 const $ = s => document.querySelector(s);
 const rnd = n => Math.floor(Math.random() * n);
 const pick = a => a[rnd(a.length)];
@@ -661,7 +663,7 @@ function kazan(){
   if(!S.oyunda) return;
   if(S.dalis){
     const v = S.dalis.v; S.dalis = null;
-    S.tabak.ekmek = v < 50 ? 'kuru' : v <= 78 ? 'tam' : 'lapa';
+    S.tabak.ekmek = v < 50 ? 'kuru' : v <= 78 ? 'tam' : 'lapa'; if (S.tabak.ekmek === 'lapa') olc('lapa');
     if(S.tabak.ekmek==='tam'){ sfx.cik(); } else { sfx.kotu(); }
     ipucuGuncelle(); tabakCiz(); $('#ibre').style.left = Math.min(v,100)+'%';
     sicak();
@@ -746,7 +748,7 @@ function musteriKacti(i){
   const m = S.slotlar[i]; if(!m || m.gidiyor) return;
   balon(i, pick(SIKAYET.gitti)); sfx.gitti();
   ucanYazi(i, 'Gitti', true);
-  S.can--; S.kombo = 0; canCiz(); komboCiz();
+  S.can--; S.kombo = 0; canCiz(); komboCiz(); olc('musteri-kacti');
   musteriGonder(i, 500);
   if(S.can <= 0) setTimeout(bitir, 900);
 }
@@ -783,7 +785,7 @@ document.addEventListener('visibilitychange', () => { durdu = document.hidden; }
 /* ---------- Başla / bitir ---------- */
 function basla(){
   sesAc(); if(ac && ac.state==='suspended') ac.resume();
-  S = yeniDurum(); S.oyunda = true;
+  S = yeniDurum(); S.oyunda = true; olc('oyun-basladi');
   [0,1,2].forEach(i => slotCiz(i));
   $('#seviye').textContent = SEVIYE[0];
   paraCiz(); canCiz(); komboCiz(); tabakCiz(); ipucuGuncelle();
@@ -801,11 +803,13 @@ function bitir(){
   $('#sKombo').textContent = S.enKombo;
   $('#rekorYazi2').textContent = yeni && S.para>0 ? 'Yeni rekor!' : rekor ? `Rekorun: ${rekor.toLocaleString('tr-TR')} ₺` : '';
   $('#bitis').hidden = false;
+  olc('oyun-bitti', {kasa: S.para, porsiyon: S.servis, seri: S.enKombo, unvan: unvanBul(S.para)});
   $('#tekrar').focus();
 }
 function paylasMetni(){ return `Islama Ustası'nda ${S.para.toLocaleString('tr-TR')} ₺ kasa yaptım, ${S.servis} porsiyon çıkardım. Unvanım: "${unvanBul(S.para)}" 🥖 Sen kaç porsiyon yetiştirirsin? @baskasakarya ${location.origin + location.pathname}`; }
 if (navigator.share) $('#kopyala').textContent = 'Skoru paylaş';
 $('#kopyala').addEventListener('click', () => {
+  olc('skor-paylasildi');
   if (navigator.share) { navigator.share({text: paylasMetni()}).catch(() => {}); return; }
   const metin = paylasMetni(), kutu = $('#paylasMetin'), b = $('#kopyala');
   kutu.textContent = metin; kutu.hidden = false;
@@ -859,6 +863,8 @@ requestAnimationFrame(t => { onceki = t; requestAnimationFrame(dongu); });
 
 <script>
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+addEventListener('appinstalled', () => { try { umami.track('ana-ekrana-eklendi'); } catch (e) {} });
+addEventListener('load', () => setTimeout(() => { if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) try { umami.track('uygulamadan-acildi'); } catch (e) {} }, 1500));
 </script>
 </body>
 </html>
